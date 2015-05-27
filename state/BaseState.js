@@ -7,9 +7,46 @@ BaseState.prototype.constructor = BaseState;
 
 BaseState.prototype = {
     init: function() {
-        this.autoHidePreloader = true;
         Phaser.State.prototype.stateKeys = Object.keys(Phaser.State.prototype);
         this.game.stateHistory.push(this.game.state.current);
+
+        // show preloader
+        if (typeof this.game.preloader !== 'undefined')
+            this.game.preloader.show();
+
+        // set build sequence interval
+        this.buildInterval = 20;
+        this.buildSequence = [];
+    },
+
+    startBuild: function() {
+        if (typeof this.buildSequence === 'undefined' || this.buildSequence.length === 0) {
+            this.buildComplete();
+            this.afterBuild();
+            return;
+        }
+        this.game.time.events.repeat(this.buildInterval, this.buildSequence.length, this.executeBuildMethod, this);
+    },
+
+    executeBuildMethod: function() {
+        if (typeof this.buildSequence === 'undefined' || this.buildSequence.length === 0)
+            return;
+
+        this.buildSequence.shift().call(this);
+
+        if (this.buildSequence.length === 0) {
+            this.buildComplete();
+            this.afterBuild();
+        }
+    },
+
+    buildComplete: function() {
+        // hide preloader
+    },
+
+    afterBuild: function() {
+        if (typeof this.game.preloader !== 'undefined')
+            this.game.preloader.hide();
     },
 
     create: function() {
@@ -19,6 +56,9 @@ BaseState.prototype = {
         }
 
         this.buildInterface();
+
+        this.startBuild();
+
         this.afterBuildInterface();
 
         if (this.autoHidePreloader && typeof this.game.preloader !== 'undefined') {
