@@ -11,6 +11,7 @@ BaseState.prototype = {
         Phaser.State.prototype.stateKeys = Object.keys(Phaser.State.prototype);
         this.game.stateHistory.push(this.game.state.current);
 
+        this.sequenceTimer = this.game.time.create(false);
         // show preloader if there's a build sequence and a preloader
         if (typeof this.game.preloader !== 'undefined' && this.getBuildSequence().length > 0)
             this.game.preloader.show();
@@ -35,16 +36,17 @@ BaseState.prototype = {
 
     runSequence: function(sequenceToBuild, callback, callbackContext, interval) {
         var sequence = sequenceToBuild,
-            callback = callback || null,
-            callbackContext = callbackContext || this,
-            interval = typeof interval === 'undefined' ? this.getBuildInterval() : interval
+            sequenceCallback = callback || null,
+            sequenceCallbackContext = callbackContext || this,
+            sequenceInterval = typeof interval === 'undefined' ? this.getBuildInterval() : interval;
 
         if (sequence.length === 0) {
             callback.call(callbackContext);
             return;
         }
 
-        this.game.time.events.repeat(interval, sequence.length, this._executeSequenceMethod, this, sequence, callback, callbackContext);
+        this.sequenceTimer.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext);
+        this.sequenceTimer.start();
     },
 
     _executeSequenceMethod: function(sequence, callback, callbackContext) {
@@ -170,6 +172,9 @@ BaseState.prototype = {
         if (typeof this.game.popupManager !== 'undefined') {
             this.game.popupManager.removeAllPopups();
         }
+
+        if (typeof this.sequenceTimer !== 'undefined')
+            this.sequenceTimer.removeAll();
 
         this.removeAudio();
         this.removeStateProps();
