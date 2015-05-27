@@ -160,7 +160,7 @@ BaseState.prototype = {
         if (typeof this.game.popupManager !== 'undefined') {
             this.game.popupManager.removeAllPopups();
         }
-
+        this.game.time.events.remove(this.buildTimer);
         this.removeAudio();
         this.removeStateProps();
     }
