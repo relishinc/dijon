@@ -6,47 +6,57 @@ BaseState.prototype = Object.create(Phaser.State.prototype);
 BaseState.prototype.constructor = BaseState;
 
 BaseState.prototype = {
+
     init: function() {
         Phaser.State.prototype.stateKeys = Object.keys(Phaser.State.prototype);
         this.game.stateHistory.push(this.game.state.current);
 
-        // show preloader
-        if (typeof this.game.preloader !== 'undefined')
+        // show preloader if there's a build sequence and a preloader
+        if (typeof this.game.preloader !== 'undefined' && this.getBuildSequence().length > 0)
             this.game.preloader.show();
+    },
 
-        // set build sequence interval
-        this.buildInterval = 20;
-        this.buildSequence = [];
+    getBuildInterval: function() {
+        return 20;
+    },
+
+    getBuildSequence: function() {
+        return [];
     },
 
     startBuild: function() {
-        if (typeof this.buildSequence === 'undefined' || this.buildSequence.length === 0) {
-            this.buildComplete();
-            this.afterBuild();
-            return;
-        }
-        this.game.time.events.repeat(this.buildInterval, this.buildSequence.length, this.executeBuildMethod, this);
-    },
-
-    executeBuildMethod: function() {
-        if (typeof this.buildSequence === 'undefined' || this.buildSequence.length === 0)
-            return;
-
-        this.buildSequence.shift().call(this);
-
-        if (this.buildSequence.length === 0) {
-            this.buildComplete();
-            this.afterBuild();
-        }
-    },
-
-    buildComplete: function() {
-        // hide preloader
+        this.runSequence(this.getBuildSequence(), this._initialSequenceComplete, this);
     },
 
     afterBuild: function() {
         if (typeof this.game.preloader !== 'undefined')
             this.game.preloader.hide();
+    },
+
+    runSequence: function(sequenceToBuild, callback, callbackContext, interval) {
+        var sequence = sequenceToBuild,
+            callback = callback || null,
+            callbackContext = callbackContext || this,
+            interval = typeof interval === 'undefined' ? this.getBuildInterval() : interval
+
+        if (sequence.length === 0) {
+            callback.call(callbackContext);
+            return;
+        }
+
+        this.game.time.events.repeat(interval, sequence.length, this._executeSequenceMethod, this, sequence, callback, callbackContext);
+    },
+
+    _executeSequenceMethod: function(sequence, callback, callbackContext) {
+        sequence.shift().call(this);
+
+        if (sequence.length === 0 && callback && callbackContext) {
+            callback.call(callbackContext);
+        }
+    },
+
+    _initialSequenceComplete: function() {
+        this.afterBuild();
     },
 
     create: function() {
@@ -160,7 +170,7 @@ BaseState.prototype = {
         if (typeof this.game.popupManager !== 'undefined') {
             this.game.popupManager.removeAllPopups();
         }
-        this.game.time.events.remove(this.buildTimer);
+
         this.removeAudio();
         this.removeStateProps();
     }
