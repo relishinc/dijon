@@ -99,6 +99,10 @@ AssetManager.prototype = {
         });
     },
 
+    loadBitmapFont: function(url) {
+        this.game.load.bitmapFont(url, global.fontPath + '/' + url + '.png', global.fontPath + '/' + url + '.fnt');
+    },
+
     setStateData: function(xml) {
         var parser = new DOMParser();
         this._xml = parser.parseFromString(xml, "application/xml");
