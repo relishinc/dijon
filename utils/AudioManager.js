@@ -34,11 +34,19 @@ AudioManager.prototype = {
     },
 
     playAudio: function(marker, volume, loop, forceRestart) {
+        console.log(marker, this._getKeyFromMarkerName(marker));
         if (this._getKeyFromMarkerName(marker)) {
             return this.playFXMarker(marker, volume, loop, forceRestart);
         }
 
         return this.playMusic(marker, volume, loop, forceRestart);
+    },
+
+    removeAudio: function(key) {
+        if (typeof this.fx !== 'undefined' && typeof this.fx[key] !== 'undefined')
+            this.removeFX(key);
+        if (typeof this.music !== 'undefined' && typeof this.music[key] !== 'undefined')
+            this.removeMusic(key);
     },
 
     playDelayedAudio: function(delay, marker, volume, loop, forceRestart) {
@@ -143,18 +151,30 @@ AudioManager.prototype = {
         }
         if (this.sound[key]) {
             this.stopMusic(key);
-            this.sound[key].destroy();
+            this.sound[key].destroy(true);
+            this.sound[key] = null;
             delete this.sound[key];
         }
     },
 
     removeFX: function(key) {
         if (typeof this.fx === 'undefined' || typeof this.fx[key] === 'undefined') {
+            console.log('no fx with key', key);
             return false;
         }
         this.stopFX(key);
+        this._destroyAudioSprite(this.fx[key]);
         this.fx[key] = null;
         delete this.fx[key];
+    },
+
+    _destroyAudioSprite: function(audioSprite) {
+        var keys = Object.keys(audioSprite.sounds);
+        while (keys.length > 0) {
+            //console.log(audioSprite.sounds[keys.pop()])
+            audioSprite.sounds[keys.pop()].destroy(true);
+        }
+        audioSprite.sounds = {};
     },
 
     playMusic: function(key, volume, loop, forceRestart) {

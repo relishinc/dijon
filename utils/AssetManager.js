@@ -61,10 +61,14 @@ AssetManager.prototype = {
         return this.game.load.image(url, global.imgPath + '/' + url + '.' + ext);
     },
 
-    loadAudio: function(url, type, exts, isAudioSprite) {
+    loadAudio: function(url, type, exts, isAudioSprite, htmlAudioOnly, webAudioOnly) {
         if (this.game.cache.checkSoundKey(url) && this.game.cache.getSound(url).decoded) {
             return;
         }
+        if (htmlAudioOnly && this.game.device.webAudio)
+            return;
+        if (webAudioOnly && !this.game.device.webAudio)
+            return;
         var path;
         // type should be 'sound' or 'sprite' ('fx' and 'music' to be deprecated)
         // default to sound
@@ -289,8 +293,9 @@ AssetManager.prototype = {
                 extensions = asset.getAttribute('extensions');
                 audioType = asset.getAttribute('audioType');
                 audioSprite = asset.getAttribute('sprite') === 'true';
-
-                this.loadAudio(url, audioType, extensions, audioSprite);
+                htmlAudioOnly = asset.getAttribute('htmlAudioOnly') === 'true';
+                webAudioOnly = asset.getAttribute('webAudioOnly') === 'true';
+                this.loadAudio(url, audioType, extensions, audioSprite, htmlAudioOnly, webAudioOnly);
                 break;
             case AssetManager.IMAGE:
                 this.loadImage(url, extension);
@@ -326,6 +331,7 @@ AssetManager.prototype = {
     clearAsset: function(asset, clearAudio, clearAtlasses, clearImages, clearText) {
         var type, url, required;
         type = asset.getAttribute('type');
+
         url = asset.getAttribute('key');
         required = asset.getAttribute('required') === "true";
         if (required) {
@@ -334,26 +340,32 @@ AssetManager.prototype = {
         }
         console.log('clearing: ', url);
         switch (type) {
+            case AssetManager.STATE:
+                this.clearState(url, clearAudio, clearAtlasses, clearImages, clearText);
+                break;
             case AssetManager.AUDIO:
                 if (clearAudio) {
+                    this.game.audioManager.removeAudio(url);
                     this.game.cache.removeSound(url);
                 }
                 break;
             case AssetManager.IMAGE:
-                if (clearImages) {
+                if (clearImages && this.game.cache.checkImageKey(url)) {
                     this.game.cache.removeImage(url);
+                    //PIXI.Texture.removeTextureFromCache(url).destroy(true);
                     PIXI.BaseTextureCache[url].destroy();
                 }
                 break;
             case AssetManager.ATLAS:
-                if (clearAtlasses) {
+                if (clearAtlasses && this.game.cache.checkImageKey(url)) {
                     this.game.cache.removeImage(url);
+                    //PIXI.Texture.removeTextureFromCache(url).destroy(true);
                     PIXI.BaseTextureCache[url].destroy();
                     this.game.cache.removeXML(url);
                 }
                 break;
             case AssetManager.TEXT:
-                if (clearText) {
+                if (clearText && this.game.cache.checkTextKey(url)) {
                     AssetManager.removeText(url);
                 }
                 break;
