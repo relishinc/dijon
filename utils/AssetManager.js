@@ -285,7 +285,7 @@ AssetManager.prototype = {
     },
 
     _loadAsset: function(asset) {
-        var type, url, extension, extensions, audioType, audioSprite;
+        var type, url, extension, extensions, audioType, audioSprite, htmlAudioOnly, webAudioOnly;
         type = asset.getAttribute('type');
         url = asset.getAttribute('key');
         extension = asset.getAttribute('extension') || null;

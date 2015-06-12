@@ -177,6 +177,8 @@ BaseState.prototype = {
             this.sequenceTimer.removeAll();
 
         this.removeAudio();
+
+
         this.removeStateProps();
     }
 };
