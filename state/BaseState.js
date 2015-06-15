@@ -125,8 +125,7 @@ BaseState.prototype = {
         var keys = Object.keys(this),
             defaults = Array.prototype.slice.call(Object.keys(Phaser.State.prototype)),
             key,
-            index,
-            n;
+            index;
 
         while (defaults.length > 0) {
             key = defaults.shift();
@@ -136,11 +135,10 @@ BaseState.prototype = {
             }
         }
 
-        n = keys.length;
-        while (n >= 0) {
-            this[keys[n]] = null;
-            delete this[keys[n]];
-            n--;
+        while (keys.length > 0) {
+            key = keys.pop();
+            this[key] = null;
+            delete this[key];
         }
     },
 

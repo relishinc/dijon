@@ -35,6 +35,14 @@ AssetManager.prototype = {
         this.onBackgroundLoadCompleteAndAudioDecoded = new Phaser.Signal();
     },
 
+    setSoundDecodingModifier: function(num) {
+        this._soundDecodingModifier = parseInt(num) || 2;
+    },
+
+    getSoundDecodingModifier: function() {
+        return this._soundDecodingModifier || 4;
+    },
+
     loadText: function(url) {
         var key = this._getAssetKey(url);
         return this.game.load.text(key, global.dataPath + '/' + url);
@@ -128,6 +136,8 @@ AssetManager.prototype = {
     },
 
     loadAssets: function(id, background) {
+        this._maxPercent = 100;
+
         this._currentAssetList = id;
         this.game.load.onFileComplete.remove(this._backgroundFileComplete, this);
         this.game.load.onFileComplete.remove(this._gameFileComplete, this);
@@ -160,8 +170,16 @@ AssetManager.prototype = {
         }
 
         if (!this._hasFiles) {
-            return this._gameLoadComplete();
+            this._gameLoadStart();
+            this._gameFileComplete(100);
+            this._gameLoadComplete();
+            return;
         }
+
+        this._numSounds = this._soundsToDecode.length;
+        this._soundsDecoded = 0;
+        this._maxPercent = 100 - (this._numSounds * this.getSoundDecodingModifier());
+        console.log('mp', this._maxPercent);
 
         return this.game.load.start();
     },
@@ -193,8 +211,9 @@ AssetManager.prototype = {
         this.game.load.onLoadComplete.addOnce(this._backgroundLoadComplete, this);
     },
 
-    getLoadProgress: function() {
-        return this.game.load.progress;
+    getLoadProgress: function(progress) {
+        var adjustedProgress = progress * this._maxPercent / 100;
+        return adjustedProgress;
     },
 
     _backgroundLoadStart: function() {
@@ -221,7 +240,8 @@ AssetManager.prototype = {
     },
 
     _gameFileComplete: function(progress, id, fileIndex, totalFiles) {
-        this.onFileComplete.dispatch(progress, id, fileIndex, totalFiles);
+
+        this.onFileComplete.dispatch(this.getLoadProgress(progress), id, fileIndex, totalFiles);
     },
 
     _gameLoadComplete: function() {
@@ -264,6 +284,9 @@ AssetManager.prototype = {
 
             this.game.audioManager.addAudio(sound.key, sound.__isAudioSprite);
         }
+        this._soundsDecoded++;
+        this._maxPercent = (100 - (this._numSounds * this.getSoundDecodingModifier())) + (this._soundsDecoded * 2);
+        this._gameFileComplete(100);
 
         if (this._soundsToDecode.length === 0) {
             sound.eventToDispatch.dispatch();
@@ -271,6 +294,8 @@ AssetManager.prototype = {
     },
 
     _getAssetKey: function(fileName) {
+        if (typeof fileName === 'undefined' || !fileName)
+            return null;
         var ext = fileName.split('.');
         ext.pop();
 
@@ -321,7 +346,7 @@ AssetManager.prototype = {
     },
 
     clearAssets: function(id, clearAudio, clearAtlasses, clearImages, clearText) {
-        var assets = this._data[id];
+        var assets = this._loadData[id];
 
         console.log('clearing: ', id);
 
@@ -343,7 +368,9 @@ AssetManager.prototype = {
 
     clearAsset: function(asset, clearAudio, clearAtlasses, clearImages, clearText) {
         var type = asset.type,
-            url = asset.key,
+            url = asset.url,
+            id = asset.id,
+            key = this._getAssetKey(url),
             required = asset.required;
 
         if (required) {
@@ -351,27 +378,41 @@ AssetManager.prototype = {
             return;
         }
         switch (type) {
-            case AssetManager.AUDIO:
+            case AssetManager.ASSET_LIST:
+                this.clearAssets(id);
+                this._completedLoads[id] = false;
+                break;
+            case AssetManager.AUDIO_SPRITE:
+                console.log('removing audio sprite', url);
+                this.game.audioManager.removeSprite(url);
+                this.game.sounds.removeByKey(url);
+                break;
+            case AssetManager.SOUND:
                 if (clearAudio) {
-                    this.game.cache.removeSound(url);
+                    console.log('removing sound', url);
+                    this.game.audioManager.removeSound(url);
+                    this.game.sound.removeByKey(url);
                 }
                 break;
             case AssetManager.IMAGE:
                 if (clearImages) {
-                    this.game.cache.removeImage(url);
-                    PIXI.BaseTextureCache[url].destroy();
+                    this.game.cache.removeImage(key);
+                    console.log('removing image', key);
+                    PIXI.BaseTextureCache[key].destroy();
                 }
                 break;
             case AssetManager.ATLAS:
                 if (clearAtlasses) {
                     this.game.cache.removeImage(url);
+                    console.log('removing atlas', url);
                     PIXI.BaseTextureCache[url].destroy();
-                    this.game.cache.removeXML(url);
+                    this.game.cache.removeJSON(url);
                 }
                 break;
             case AssetManager.TEXT:
                 if (clearText) {
-                    AssetManager.removeText(url);
+                    console.log('removing text', key);
+                    this.game.cache.removeText(key);
                 }
                 break;
         }
