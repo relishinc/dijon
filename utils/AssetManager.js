@@ -335,7 +335,6 @@ AssetManager.prototype = {
     clearAsset: function(asset, clearAudio, clearAtlasses, clearImages, clearText) {
         var type, url, required;
         type = asset.getAttribute('type');
-
         url = asset.getAttribute('key');
         required = asset.getAttribute('required') === "true";
         if (required) {
@@ -356,14 +355,12 @@ AssetManager.prototype = {
             case AssetManager.IMAGE:
                 if (clearImages && this.game.cache.checkImageKey(url)) {
                     this.game.cache.removeImage(url);
-                    //PIXI.Texture.removeTextureFromCache(url).destroy(true);
                     PIXI.BaseTextureCache[url].destroy();
                 }
                 break;
             case AssetManager.ATLAS:
                 if (clearAtlasses && this.game.cache.checkImageKey(url)) {
                     this.game.cache.removeImage(url);
-                    //PIXI.Texture.removeTextureFromCache(url).destroy(true);
                     PIXI.BaseTextureCache[url].destroy();
                     this.game.cache.removeXML(url);
                 }

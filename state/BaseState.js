@@ -34,23 +34,24 @@ BaseState.prototype = {
             this.game.preloader.hide();
     },
 
-    runSequence: function(sequenceToBuild, callback, callbackContext, interval) {
+    runSequence: function(sequenceToBuild, callback, callbackContext, interval, methodContext) {
         var sequence = sequenceToBuild,
             sequenceCallback = callback || null,
             sequenceCallbackContext = callbackContext || this,
-            sequenceInterval = typeof interval === 'undefined' ? this.getBuildInterval() : interval;
+            sequenceInterval = typeof interval === 'undefined' ? this.getBuildInterval() : interval,
+            sequenceMethodContext = typeof methodContext === 'undefined' ? this : methodContext;
 
         if (sequence.length === 0) {
             callback.call(callbackContext);
             return;
         }
 
-        this.sequenceTimer.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext);
+        this.sequenceTimer.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext, sequenceMethodContext);
         this.sequenceTimer.start();
     },
 
-    _executeSequenceMethod: function(sequence, callback, callbackContext) {
-        sequence.shift().call(this);
+    _executeSequenceMethod: function(sequence, callback, callbackContext, methodContext) {
+        sequence.shift().call(methodContext);
 
         if (sequence.length === 0 && callback && callbackContext) {
             callback.call(callbackContext);
