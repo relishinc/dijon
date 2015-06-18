@@ -179,7 +179,6 @@ AssetManager.prototype = {
         this._numSounds = this._soundsToDecode.length;
         this._soundsDecoded = 0;
         this._maxPercent = 100 - (this._numSounds * this.getSoundDecodingModifier());
-        console.log('mp', this._maxPercent);
 
         return this.game.load.start();
     },
