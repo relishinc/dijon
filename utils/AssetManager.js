@@ -365,6 +365,11 @@ AssetManager.prototype = {
         this._completedLoads[id] = false;
     },
 
+    clearImage: function(key) {
+        this.game.cache.removeImage(key);
+        PIXI.BaseTextureCache[key].destroy();
+    },
+
     clearAsset: function(asset, clearAudio, clearAtlasses, clearImages, clearText) {
         var type = asset.type,
             url = asset.url,
@@ -382,22 +387,18 @@ AssetManager.prototype = {
                 this._completedLoads[id] = false;
                 break;
             case AssetManager.AUDIO_SPRITE:
-                console.log('removing audio sprite', url);
                 this.game.audioManager.removeSprite(url);
                 this.game.sounds.removeByKey(url);
                 break;
             case AssetManager.SOUND:
                 if (clearAudio) {
-                    console.log('removing sound', url);
                     this.game.audioManager.removeSound(url);
                     this.game.sound.removeByKey(url);
                 }
                 break;
             case AssetManager.IMAGE:
                 if (clearImages) {
-                    this.game.cache.removeImage(key);
-                    console.log('removing image', key);
-                    PIXI.BaseTextureCache[key].destroy();
+                    this.clearImage(key);
                 }
                 break;
             case AssetManager.ATLAS:
