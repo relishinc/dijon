@@ -95,7 +95,7 @@ AudioManager.prototype = {
 
     stopAudio: function(marker) {
         if (this._getKeyFromMarkerName(marker)) {
-            return this.stopSpriteMarkerMarker(marker);
+            return this.stopSpriteMarker(marker);
         }
         return this.stopSound(marker);
     },
