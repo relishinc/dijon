@@ -260,7 +260,7 @@ AssetManager.prototype = {
     _checkSoundDecoding: function(eventToDispatch) {
         var sound, i, isAudioSprite;
 
-        if (this._soundsToDecode && this._soundsToDecode.length > 0) {
+        if (typeof this._soundsToDecode !== 'undefined' && this._soundsToDecode.length > 0) {
             for (i = 0; i < this._soundsToDecode.length; i++) {
                 isAudioSprite = this._soundsToDecode[i].isAudioSprite;
                 sound = this.game.add.sound(this._soundsToDecode[i].url);
@@ -269,6 +269,8 @@ AssetManager.prototype = {
                 sound.onDecoded.addOnce(this._onSoundDecoded, this);
             }
         } else {
+            this._maxPercent = 100;
+            this._gameFileComplete(100);
             eventToDispatch.dispatch();
         }
     },
