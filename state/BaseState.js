@@ -12,8 +12,6 @@ BaseState.prototype = {
         Phaser.State.prototype.stateKeys = Object.keys(Phaser.State.prototype);
         this.game.stateHistory.push(this.game.state.current);
 
-        this.sequenceTimer = this.game.time.create(false);
-
         if (typeof this.game.preloader !== 'undefined' && ((this.getPreloadID() && !this.game.assetManager.hasLoadedAssets(this.getPreloadID())) || (this.getBuildSequence().length > 0 && this.getBuildInterval() > 0)))
             this.game.preloader.show();
     },
@@ -65,15 +63,19 @@ BaseState.prototype = {
                 this._executeSequenceMethod(sequence, sequenceCallback, sequenceCallbackContext);
             return;
         }
-
-        this.sequenceTimer.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext);
-        this.sequenceTimer.start();
+        //this.game.time.events.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext);
+        //setInterval(function(){ alert("Hello"); }, 3000);
+        var self = this;
+        this.sequenceTimer = setInterval(function() {
+            self._executeSequenceMethod(sequence, sequenceCallback, sequenceCallbackContext)
+        }, sequenceInterval);
     },
 
     _executeSequenceMethod: function(sequence, callback, callbackContext) {
         sequence.shift().call(this);
 
         if (sequence.length === 0 && callback && callbackContext) {
+            clearInterval(this.sequenceTimer);
             callback.call(callbackContext);
         }
     },
@@ -95,11 +97,6 @@ BaseState.prototype = {
     },
 
     shutdown: function() {
-        if (typeof this.sequenceTimer !== 'undefined') {
-            this.sequenceTimer.removeAll();
-            this.sequenceTimer.destroy();
-        }
-
         this._removeAudio();
         this._removeStateProps();
     },
@@ -125,8 +122,7 @@ BaseState.prototype = {
         var keys = Object.keys(this),
             defaults = Array.prototype.slice.call(Object.keys(Phaser.State.prototype)),
             key,
-            index,
-            n;
+            index;
 
         while (defaults.length > 0) {
             key = defaults.shift();
@@ -136,11 +132,10 @@ BaseState.prototype = {
             }
         }
 
-        n = keys.length;
-        while (n >= 0) {
-            this[keys[n]] = null;
-            delete this[keys[n]];
-            n--;
+        while (keys.length > 0) {
+            key = keys.pop();
+            this[key] = null;
+            delete this[key];
         }
     },
 
