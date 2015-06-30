@@ -63,7 +63,10 @@ BaseState.prototype = {
                 this._executeSequenceMethod(sequence, sequenceCallback, sequenceCallbackContext);
             return;
         }
-        this.game.time.events.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext);
+        if (typeof this.game.__stateBuildInterval !== 'undefined')
+            this.game.time.events.remove(this.game.__stateBuildInterval);
+
+        this.game.__stateBuildInterval = this.game.time.events.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext);
         /*var self = this;
         this.sequenceTimer = setInterval(function() {
             self._executeSequenceMethod(sequence, sequenceCallback, sequenceCallbackContext)
