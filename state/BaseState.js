@@ -11,7 +11,8 @@ BaseState.prototype = {
     init: function() {
         Phaser.State.prototype.stateKeys = Object.keys(Phaser.State.prototype);
         this.game.stateHistory.push(this.game.state.current);
-
+        this.sequenceTimer = this.game.time.create(false);
+        this.backupTimer = this.game.time.create(false);
         if (typeof this.game.preloader !== 'undefined' && ((this.getPreloadID() && !this.game.assetManager.hasLoadedAssets(this.getPreloadID())) || (this.getBuildSequence().length > 0 && this.getBuildInterval() > 0)))
             this.game.preloader.show();
     },
@@ -63,24 +64,34 @@ BaseState.prototype = {
                 this._executeSequenceMethod(sequence, sequenceCallback, sequenceCallbackContext);
             return;
         }
-        this.game.time.events.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext);
-        /*var self = this;
-        this.sequenceTimer = setInterval(function() {
-            self._executeSequenceMethod(sequence, sequenceCallback, sequenceCallbackContext)
-        }, sequenceInterval);
-*/
+        this.__sequence = sequence;
+        this.__sequenceCallback = sequenceCallback;
+        this.__sequenceCallbackContext = sequenceCallbackContext;
+        this.sequenceTimer.repeat(sequenceInterval, sequence.length, this._executeSequenceMethod, this, sequence, sequenceCallback, sequenceCallbackContext);
+        this.sequenceTimer.start();
+        this.backupTimer.add(sequence.length * sequenceInterval + 100, this._backupSequenceCOmplete, this);
+        this.backupTimer.start();
+    },
+
+    _backupSequenceCOmplete: function() {
+        this.sequenceTimer.destroy();
+        if (this.__sequence.length > 0) {
+            while (this.__sequence.length > 0)
+                this._executeSequenceMethod(this.__sequence, this.__sequenceCallback, this.__sequenceCallbackContext);
+        }
     },
 
     _executeSequenceMethod: function(sequence, callback, callbackContext) {
         sequence.shift().call(this);
 
         if (sequence.length === 0 && callback && callbackContext) {
-            clearInterval(this.sequenceTimer);
             callback.call(callbackContext);
         }
     },
 
     _initialSequenceComplete: function() {
+        this.sequenceTimer.destroy();
+        this.backupTimer.destroy();
         this.afterBuild();
     },
 
