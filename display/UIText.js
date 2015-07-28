@@ -228,6 +228,114 @@ Object.defineProperty(Dijon.UIText.prototype, 'height', {
     }
 });
 
+Dijon.UIText.prototype.updateText = function() {
+
+    this.texture.baseTexture.resolution = this.resolution;
+
+    this.context.font = this.style.font;
+
+    var outputText = this.text;
+
+    if (this.style.wordWrap) {
+        outputText = this.runWordWrap(this.text);
+    }
+
+    //split text into lines
+    var lines = outputText.split(/(?:\r\n|\r|\n)/);
+
+    //calculate text width
+    var lineWidths = [];
+    var maxLineWidth = 0;
+    var fontProperties = this.determineFontProperties(this.style.font);
+
+    for (var i = 0; i < lines.length; i++) {
+        var lineWidth = this.context.measureText(lines[i]).width + this.padding.x;
+        lineWidths[i] = lineWidth;
+        maxLineWidth = Math.max(maxLineWidth, lineWidth);
+    }
+
+    var width = maxLineWidth + this.style.strokeThickness;
+
+    this.canvas.width = width * this.resolution + (Dijon.UIText.GLOBAL_PADDING_X * 2);
+
+    //calculate text height
+    var lineHeight = fontProperties.fontSize + this.style.strokeThickness + this.padding.y;
+    var height = lineHeight * lines.length;
+    var lineSpacing = this._lineSpacing;
+
+    if (lineSpacing < 0 && Math.abs(lineSpacing) > lineHeight) {
+        lineSpacing = -lineHeight;
+    }
+
+    //  Adjust for line spacing
+    if (lineSpacing !== 0) {
+        var diff = lineSpacing * (lines.length - 1);
+        height += diff;
+    }
+
+    this.canvas.height = height * this.resolution + (Dijon.UIText.GLOBAL_PADDING_Y * 2);
+
+    this.context.scale(this.resolution, this.resolution);
+
+    if (navigator.isCocoonJS) {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    if (this.style.backgroundColor) {
+        this.context.fillStyle = this.style.backgroundColor;
+        this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    this.context.fillStyle = this.style.fill;
+    this.context.font = this.style.font;
+    this.context.strokeStyle = this.style.stroke;
+    this.context.textBaseline = 'alphabetic';
+    this.context.shadowOffsetX = this.style.shadowOffsetX;
+    this.context.shadowOffsetY = this.style.shadowOffsetY;
+    this.context.shadowColor = this.style.shadowColor;
+    this.context.shadowBlur = this.style.shadowBlur;
+    this.context.lineWidth = this.style.strokeThickness;
+    this.context.lineCap = 'round';
+    this.context.lineJoin = 'round';
+
+    var linePositionX;
+    var linePositionY;
+
+    this._charCount = 0;
+
+    //  Draw text line by line
+    for (i = 0; i < lines.length; i++) {
+        linePositionX = this.style.strokeThickness / 2 + Dijon.UIText.GLOBAL_PADDING_X;
+        linePositionY = (this.style.strokeThickness / 2 + i * lineHeight) + fontProperties.ascent;
+
+        if (i > 0) {
+            linePositionY += (lineSpacing * i);
+        }
+
+        if (this.style.align === 'right') {
+            linePositionX += maxLineWidth - lineWidths[i];
+        } else if (this.style.align === 'center') {
+            linePositionX += (maxLineWidth - lineWidths[i]) / 2;
+        }
+
+        if (this.colors.length > 0) {
+            this.updateLine(lines[i], linePositionX, linePositionY);
+        } else {
+            if (this.style.stroke && this.style.strokeThickness) {
+                this.context.strokeText(lines[i], linePositionX, linePositionY);
+            }
+
+            if (this.style.fill) {
+                this.context.fillText(lines[i], linePositionX, linePositionY);
+            }
+        }
+
+    }
+
+    this.updateTexture();
+};
+
+
 /**
  * Updates texture size based on canvas size
  *
@@ -372,3 +480,6 @@ Phaser.GameObjectFactory.prototype.uiText = function(x, y, text, fontName, fontS
     }
     return group.add(new Dijon.UIText(this.game, x, y, text, fontName, fontSize, color, align, wordWrap, width, lineSpacing, settings));
 };
+
+Dijon.UIText.GLOBAL_PADDING_X = 0;
+Dijon.UIText.GLOBAL_PADDING_Y = 0;
