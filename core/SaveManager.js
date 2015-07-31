@@ -90,7 +90,11 @@ Dijon.SaveManager.prototype = {
             console.log('no local storage');
             return false;
         }
-        localStorage.setItem(key, this._getString(value));
+        try {
+            localStorage.setItem(key, this._getString(value));
+        } catch (e) {
+            console.log('your data could not be saved');
+        }
     },
 
     /**
