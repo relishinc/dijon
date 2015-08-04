@@ -445,6 +445,45 @@ Dijon.UIText.prototype.getBounds = function(matrix) {
     return bounds;
 };
 
+Dijon.UIText.prototype.setShadow = function(x, y, color, blur, shadowStroke, shadowFill) {
+    var divisor = this.game.resolution / 2;
+
+    if (x === undefined) {
+        x = 0;
+    }
+    if (y === undefined) {
+        y = 0;
+    }
+    if (color === undefined) {
+        color = 'rgba(0, 0, 0, 1)';
+    }
+    if (blur === undefined) {
+        blur = 0;
+    }
+    if (shadowStroke === undefined) {
+        shadowStroke = true;
+    }
+    if (shadowFill === undefined) {
+        shadowFill = true;
+    }
+
+
+
+    x = x / divisor;
+    y = y / divisor;
+    blur = blur / divisor;
+
+    this.style.shadowOffsetX = x;
+    this.style.shadowOffsetY = y;
+    this.style.shadowColor = color;
+    this.style.shadowBlur = blur;
+    this.style.shadowStroke = shadowStroke;
+    this.style.shadowFill = shadowFill;
+    this.dirty = true;
+
+    return this;
+};
+
 
 // STATIC VARIABLES
 /**
