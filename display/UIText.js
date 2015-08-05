@@ -446,7 +446,7 @@ Dijon.UIText.prototype.getBounds = function(matrix) {
 };
 
 Dijon.UIText.prototype.setShadow = function(x, y, color, blur, shadowStroke, shadowFill) {
-    var divisor = this.game.resolution / 2;
+    var divisor = this.game.resolution == 1 ? 2 : this.game.resolution;
 
     if (x === undefined) {
         x = 0;
