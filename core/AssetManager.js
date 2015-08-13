@@ -372,8 +372,9 @@ Dijon.AssetManager.prototype = {
      * @param  {String} url the full image url, with extension (prepends the imgPath)
      * @return {Phaser.Loader.image} adds the image file to the load queue
      */
-    loadImage: function(url) {
-        var key = this._getAssetKey(url);
+    loadImage: function(url, standalone) {
+        var key = this._getAssetKey(url),
+            loader = standalone === true ? new Phaser.Loader(this.game) : this.game.load;
 
         if (this.game.cache.checkImageKey(key)) {
             // if the image key already exists, don't reload the image and return the key
@@ -381,7 +382,7 @@ Dijon.AssetManager.prototype = {
         }
         url = key + this._resolution + '.' + this._getExtension(url);
 
-        return this.game.load.image(key, this._imgPath + '/' + url);
+        return loader.image(key, this._imgPath + '/' + url);
     },
     /**
      * loads a bitmap font
