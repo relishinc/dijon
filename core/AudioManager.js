@@ -80,6 +80,10 @@ Dijon.AudioManager.prototype = {
         this._sprites[key].stop(marker);
     },
 
+    _stopSound: function() {
+        this.stop();
+    },
+
     // public methods
     /**
      * Sets the default volume for all sounds (used in the case where a volume is not supplied to the playAudio, playSound, or playSpriteMarker methods)
@@ -270,6 +274,23 @@ Dijon.AudioManager.prototype = {
         this.stopSpriteMarker(key);
         this._sprites[key] = null;
         delete this._sprites[key];
+    },
+
+    fade: function(sound, volume, time, stop) {
+        if (!sound)
+            return;
+
+        if (sound.fadeTween && sound.fadeTween)
+            this.game.tweens.remove(sound.fadeTween);
+
+        sound.fadeTween = this.game.add.tween(sound).to({
+            volume: volume
+        }, time || 300, Phaser.Easing.Linear.None);
+
+        if (stop === true)
+            sound.fadeTween.onComplete.addOnce(this._stopSound, sound);
+
+        sound.fadeTween.start();
     }
 
 };
