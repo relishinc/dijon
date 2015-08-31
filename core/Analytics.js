@@ -1,4 +1,4 @@
-var Analytics = function (category) {
+var Analytics = function(category) {
     if (!category) {
         throw new this.exception('No category defined');
     }
@@ -10,7 +10,7 @@ var Analytics = function (category) {
 Analytics.prototype.constructor = Analytics;
 
 Analytics.prototype = {
-    trackEvent: function (action, label, value) {
+    trackEvent: function(action, label, value) {
         if (!this.active) {
             return;
         }
@@ -21,20 +21,21 @@ Analytics.prototype = {
 
         if (value) {
             window.ga('send', 'event', this.category, action, label, value);
-        }
-        else if (label) {
+        } else if (label) {
             window.ga('send', 'event', this.category, action, label);
-        }
-        else {
+        } else {
             window.ga('send', 'event', this.category, action);
         }
     },
 
-    exception: function (message) {
+    exception: function(message) {
         this.message = message;
         this.name = 'AnalyticsException';
-    }
+    },
 
+    setCategory: function(category) {
+        this.category = category;
+    }
 };
 
 module.exports = Analytics;
