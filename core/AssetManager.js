@@ -249,7 +249,9 @@ Dijon.AssetManager.prototype = {
     _loadAsset: function(asset) {
         var type = asset.type,
             url = asset.url || asset.key;
-
+        if (asset['url_' + window.lang] !== undefined) {
+            url = asset['url_' + window.lang];
+        }
         switch (type) {
             case Dijon.AssetManager.ASSET_LIST:
                 return this._loadAssets(asset.id);
